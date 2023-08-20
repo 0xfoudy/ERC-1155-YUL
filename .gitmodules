@@ -1,0 +1,3 @@
+[submodule "ERC-1155-YUL/lib/forge-std"]
+	path = ERC-1155-YUL/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
