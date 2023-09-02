@@ -6,7 +6,7 @@ import "./lib/YulDeployer.sol";
 
 interface ERC1155 {
     function mint(address to, uint256 id, uint256 value) external;
-    function mintBatch(address to, uint256[] calldata ids, uint256[] calldata values) external returns(bytes memory);
+    function mintBatch(address to, uint256[] calldata ids, uint256[] calldata values) external;
     function balanceOf(address _owner, uint256 _id) external returns(uint256);
 
 }

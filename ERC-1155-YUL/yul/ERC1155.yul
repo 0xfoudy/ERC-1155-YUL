@@ -115,7 +115,6 @@ object "ERC1155" {
                     let offset := balanceAddressOffset(to, id)
                     mint(to, id, value)
                 }
-                return(0x40, 0x20) // question, why do i have to return something with offset >= 40 for it to work??
             }
             function burn(from, id, value) {
                 deduceFromBalance(from, id, value)
