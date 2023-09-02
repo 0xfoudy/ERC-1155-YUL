@@ -10,7 +10,7 @@ object "ERC1155" {
             require(iszero(callvalue()))
 
             switch functionSelector()
-            case 0x42842e0e {
+            case 0x0febdd49 {
                 safeTransferFrom(getAddressParam(0), getAddressParam(1), getUintParam(2), getUintParam(3))
                 returnTrue()
             }
@@ -59,7 +59,7 @@ object "ERC1155" {
             }
             function safeTransferFrom(from, to, id, value) {
                 require(lte(value, balanceOf(from, id)))
-                require(isApprovedForAll(from, caller()))
+                require(or(eq(from, caller()), isApprovedForAll(from, caller())))
                 deduceFromBalance(from, id, value)
                 addToBalance(to, id, value)
             }
@@ -70,13 +70,9 @@ object "ERC1155" {
                  {
                     let id := getUintParam(add(2,i))
                     let value := getUintParam(add(3, add(idsSize, i)))
-                    require(lte(value, balanceOf(from, id)))
-                    require(isApprovedForAll(from, caller()))
-                    deduceFromBalance(from, id, value)
-                    addToBalance(to, id, value)
+                    safeTransferFrom(from, to, id, value)
                  }
             }
-    
             function balanceOf(owner, id) -> bal {
                 bal := sload(balanceAddressOffset(owner, id))
             }

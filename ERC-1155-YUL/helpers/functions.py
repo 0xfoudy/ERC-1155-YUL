@@ -12,7 +12,9 @@ if __name__ == "__main__":
     # List of function signatures you want to generate selectors for
     function_signatures = [
         "mint(address,uint256,uint256)",
-        "mintBatch(address,uint256[],uint256[])"
+        "mintBatch(address,uint256[],uint256[])",
+        "safeTransferFrom(address,address,uint256,uint256)"
+
     ]
     
     for signature in function_signatures:

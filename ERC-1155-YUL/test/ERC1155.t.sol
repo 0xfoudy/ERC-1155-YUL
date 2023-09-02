@@ -8,6 +8,8 @@ interface ERC1155 {
     function mint(address to, uint256 id, uint256 value) external;
     function mintBatch(address to, uint256[] calldata ids, uint256[] calldata values) external;
     function balanceOf(address _owner, uint256 _id) external returns(uint256);
+    function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value) external;
+    function setApprovalForAll(address _operator, bool _approved) external;
 
 }
 
@@ -44,53 +46,87 @@ contract ERC1155Test is Test {
         assertEq(erc1155Contract.balanceOf(address(123),1), 5);
         assertEq(erc1155Contract.balanceOf(address(123),2), 2);
     }
-/*
+
     // function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes calldata _data) external;
     function testSafeTransferFrom() public {
-        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba'], 0x00);
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 1;
+        ids[1] = 2;
+
+        uint256[] memory values = new uint256[](2);
+        values[0] = 4;
+        values[1] = 1;
+
+        erc1155Contract.mintBatch(address(123), ids, values);
+        assertEq(erc1155Contract.balanceOf(address(123), 1), 4);
+        assertEq(erc1155Contract.balanceOf(address(123), 2), 1);
+        
+        // single transfer
+        vm.prank(address(123)); 
+        erc1155Contract.safeTransferFrom(address(123), address(321), 1, 1);
+        assertEq(erc1155Contract.balanceOf(address(123), 1), 3);
+        assertEq(erc1155Contract.balanceOf(address(321), 1), 1);
+    }
+
+    function testSafeTransferFromApproval() public {
+        uint256[] memory ids = new uint256[](5);
+        ids[0] = 1;
+        ids[1] = 1;
+        ids[2] = 1;
+        ids[3] = 1;
+        ids[4] = 2;
+
+        uint256[] memory values = new uint256[](5);
+        values[0] = 1;
+        values[1] = 1;
+        values[2] = 1;
+        values[3] = 1;
+        values[4] = 1;
+
+        erc1155Contract.mintBatch(address(1), ids, values);
         assertEq(erc1155Contract.balanceOf(address(1), 1), 4);
         assertEq(erc1155Contract.balanceOf(address(1), 2), 1);
         
         // single transfer
         vm.prank(address(1)); 
-        erc1155Contract.safeTransferFrom(address(1), address(2), 1, 1, 0x00);
+        erc1155Contract.safeTransferFrom(address(1), address(2), 1, 1);
         assertEq(erc1155Contract.balanceOf(address(1), 1), 3);
         assertEq(erc1155Contract.balanceOf(address(2), 1), 1);
-        
         // multiple transfer, same id
         vm.prank(address(1));
-        erc1155Contract.safeTransferFrom(address(1), address(2), 1, 2, 0x00);
+        erc1155Contract.safeTransferFrom(address(1), address(2), 1, 2);
         assertEq(erc1155Contract.balanceOf(address(1), 1), 1);
         assertEq(erc1155Contract.balanceOf(address(2), 1), 3);
 
-        // no allowance transfer from
+       /* // no allowance transfer from
         vm.expectRevert();
         vm.prank(address(1));
-        erc1155Contract.safeTransferFrom(address(2), address(1), 1, 3, 0x00);
-
+        erc1155Contract.safeTransferFrom(address(2), address(1), 1, 3);
+        
         // not enough tokens to transfer
         vm.expectRevert();
         vm.prank(address(1));
-        erc1155Contract.safeTransferFrom(address(1), address(2), 1, 6, 0x00);
-
+        erc1155Contract.safeTransferFrom(address(1), address(2), 1, 6);
+*/
         // with allowance transfer from
         vm.prank(address(2));
         erc1155Contract.setApprovalForAll(address(1), true);
         vm.prank(address(1));
-        erc1155Contract.safeTransferFrom(address(2), address(1), 1, 3, 0x00);
+        erc1155Contract.safeTransferFrom(address(2), address(1), 1, 3);
         assertEq(erc1155Contract.balanceOf(address(1), 1), 4);
         assertEq(erc1155Contract.balanceOf(address(2), 1), 0);    
     }
 
+/*
     // function safeBatchTransferFrom(address _from, address _to, uint256[] calldata _ids, uint256[] calldata _values, bytes calldata _data) external;
     function testSafeBatchTransferFrom() public {
-        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba'], 0x00);
+        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba']);
         assertEq(erc1155Contract.balanceOf(address(1), 1), 4);
         assertEq(erc1155Contract.balanceOf(address(1), 2), 1);
         
         // single transfer
         vm.prank(address(1)); 
-        erc1155Contract.safeBatchTransferFrom(address(1), address(2), [1,2], [2,1], 0x00);
+        erc1155Contract.safeBatchTransferFrom(address(1), address(2), [1,2], [2,1]);
         assertEq(erc1155Contract.balanceOf(address(1), 1), 2);
         assertEq(erc1155Contract.balanceOf(address(2), 1), 2);
         assertEq(erc1155Contract.balanceOf(address(1), 2), 0);
@@ -99,19 +135,19 @@ contract ERC1155Test is Test {
         // no allowance transfer from
         vm.expectRevert();
         vm.prank(address(1));
-        erc1155Contract.safeBatchTransferFrom(address(2), address(1), [1,2], [1,1], 0x00);
+        erc1155Contract.safeBatchTransferFrom(address(2), address(1), [1,2], [1,1]);
 
         // not enough tokens to transfer from
         vm.expectRevert();
         vm.prank(address(1));
-        erc1155Contract.safeBatchTransferFrom(address(1), address(2), [1,2], [3,2], 0x00);
+        erc1155Contract.safeBatchTransferFrom(address(1), address(2), [1,2], [3,2]);
 
         vm.prank(address(2));
         erc1155Contract.setApprovalForAll(address(1), true);
         assertEq(erc1155Contract.isApprovedForAll(address(2),address(1), true));
 
         vm.prank(address(1));
-        erc1155Contract.safeBatchTransferFrom(address(2), address(1), [1,2], [2,1], 0x00);
+        erc1155Contract.safeBatchTransferFrom(address(2), address(1), [1,2], [2,1]);
         assertEq(erc1155Contract.balanceOf(address(1), 1), 4);
         assertEq(erc1155Contract.balanceOf(address(2), 1), 0);
         assertEq(erc1155Contract.balanceOf(address(1), 2), 1);
@@ -121,7 +157,7 @@ contract ERC1155Test is Test {
 
     // function balanceOf(address _owner, uint256 _id) external view returns (uint256);
     function testBalanceOf() public {
-        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba'], 0x00);
+        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba']);
         assertEq(erc1155Contract.balanceOf(address(1), 1), 4);
         assertEq(erc1155Contract.balanceOf(address(1), 1), 1);
         assertEq(erc1155Contract.balanceOf(address(1), 3), 0);
@@ -129,8 +165,8 @@ contract ERC1155Test is Test {
 
     // function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids) external view returns (uint256[] memory);
     function testBalanceOfBatch() public {
-        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba'], 0x00);
-        erc1155Contract.batchMint(address(2), [1,1,1,1,2], ['def','ghi','klm','nop','abc'], 0x00);
+        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba']);
+        erc1155Contract.batchMint(address(2), [1,1,1,1,2], ['def','ghi','klm','nop','abc']);
         assertEq(erc1155Contract.balanceOfBatch([address(1), address(2)], [1,1]), [4,4]);
         assertEq(erc1155Contract.balanceOfBatch([address(1), address(1)], [2,1]), [1,4]);
         assertEq(erc1155Contract.balanceOfBatch([address(1), address(2)], [2,2]), [1,1]);
@@ -142,7 +178,7 @@ contract ERC1155Test is Test {
 
     // function burn(address from, uint256 id, uint256 value)
     function testBurn() public {
-        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba'], 0x00);
+        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba']);
         vm.prank(address(1));
         erc1155Contract.burn(address(1), 1, 2);
         assertEq(erc1155Contract.balanceOfBatch([address(1), address(1)], [1, 2]), [2, 1]);
@@ -159,7 +195,7 @@ contract ERC1155Test is Test {
 
     // function batchburn(address[] memory from, uint256[] memory id, uint256[] memory value)
     function testBatchBurn() public {
-        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba'], 0x00);
+        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba']);
         vm.prank(address(1));
         erc1155Contract.batchBurn(address(1), [1,2], [2,1]);
         assertEq(erc1155Contract.balanceOfBatch([address(1), address(1)], [2,0]), [2,0]);
@@ -175,7 +211,7 @@ contract ERC1155Test is Test {
     event TransferSingle(address indexed _operator, address indexed _from, address indexed _to, uint256 _id, uint256 _value);
 
     function testTransferSingleEvent() public {
-        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba'], 0x00);
+        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba']);
 
         // single transfer
         vm.prank(address(1)); 
@@ -183,13 +219,13 @@ contract ERC1155Test is Test {
         vm.expectEmit(true, true, true, true);
         emit TransferSingle(address(1), address(1), address(2), 1, 1);
 
-        erc1155Contract.safeTransferFrom(address(1), address(2), 1, 1, 0x00);
+        erc1155Contract.safeTransferFrom(address(1), address(2), 1, 1);
     }
 
     event TransferBatch(address indexed _operator, address indexed _from, address indexed _to, uint256[] _ids, uint256[] _values);
 
     function testTransferBatchEvent() public {
-        erc1155Contract.batchMint(address(1), [1,2,3,4,5], [5,4,3,2,1], 0x00);
+        erc1155Contract.batchMint(address(1), [1,2,3,4,5], [5,4,3,2,1]);
         
         vm.prank(address(1));
         
@@ -207,7 +243,7 @@ contract ERC1155Test is Test {
     event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
 
     function testApprovalForAll() public {
-        erc1155Contract.mint(address(1), 1, 'abc', 0x00);
+        erc1155Contract.mint(address(1), 1, 'abc');
         vm.prank(address(1));
 
         vm.expectEmit(true, true, true);
