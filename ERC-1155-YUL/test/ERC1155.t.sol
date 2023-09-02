@@ -98,7 +98,7 @@ contract ERC1155Test is Test {
         assertEq(erc1155Contract.balanceOf(address(1), 1), 1);
         assertEq(erc1155Contract.balanceOf(address(2), 1), 3);
 
-       /* // no allowance transfer from
+        // no allowance transfer from
         vm.expectRevert();
         vm.prank(address(1));
         erc1155Contract.safeTransferFrom(address(2), address(1), 1, 3);
@@ -107,7 +107,7 @@ contract ERC1155Test is Test {
         vm.expectRevert();
         vm.prank(address(1));
         erc1155Contract.safeTransferFrom(address(1), address(2), 1, 6);
-*/
+
         // with allowance transfer from
         vm.prank(address(2));
         erc1155Contract.setApprovalForAll(address(1), true);

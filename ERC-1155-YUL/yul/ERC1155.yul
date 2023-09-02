@@ -93,7 +93,7 @@ object "ERC1155" {
                 sstore(approvalsForAllOffset(caller(), operator), approved)
             }
             function isApprovedForAll(owner, operator) -> isApproved{
-                isApproved := approvalsForAllOffset(owner, operator)
+                isApproved := sload(approvalsForAllOffset(owner, operator))
             }
             function mint(to, id, value) {
                 addToBalance(to, id, value)
