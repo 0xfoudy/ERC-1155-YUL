@@ -13,8 +13,11 @@ if __name__ == "__main__":
     function_signatures = [
         "mint(address,uint256,uint256)",
         "mintBatch(address,uint256[],uint256[])",
-        "safeTransferFrom(address,address,uint256,uint256)"
-
+        "safeTransferFrom(address,address,uint256,uint256)",
+        "burn(address,uint256,uint256)",
+        "burnBatch(address,uint256[],uint256[])",
+        "safeBatchTransferFrom(address,address,uint256[],uint256[])",
+        "isApprovedForAll(address,address)"
     ]
     
     for signature in function_signatures:

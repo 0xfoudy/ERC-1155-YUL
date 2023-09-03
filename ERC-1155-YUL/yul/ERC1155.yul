@@ -14,9 +14,10 @@ object "ERC1155" {
                 safeTransferFrom(getAddressParam(0), getAddressParam(1), getUintParam(2), getUintParam(3))
                 returnTrue()
             }
-            case 0x6b34485e {
-                let thirdParam := getUintParam(2) //size of ids
-                safeBatchTransferFrom(getAddressParam(0), getAddressParam(1), thirdParam, getUintParam(add(thirdParam, 3)))
+            case 0xfba0ee64 {
+                let idsOffset := add(4, getUintParam(2))
+                let valuesOffset := add(4, getUintParam(3))
+                safeBatchTransferFrom(getAddressParam(0), getAddressParam(1), idsOffset, valuesOffset)
                 returnTrue()
             }
             case 0x00fdd58e {
@@ -30,7 +31,7 @@ object "ERC1155" {
             case 0xa22cb465 {
                 setApprovalForAll(getAddressParam(0), getUintParam(1))
             }
-            case 0x802e4e3d {
+            case 0xe985e9c5 {
                 if iszero(isApprovedForAll(getAddressParam(0), getAddressParam(1))) { returnFalse() }
                 returnTrue()
             }
@@ -46,13 +47,14 @@ object "ERC1155" {
                 mintBatch(getAddressParam(0), idOffset, valuesOffset)
                 returnTrue()
             }
-            case 0x4104c4f2 {
+            case 0xf5298aca {
                 burn(getAddressParam(0), getUintParam(1), getUintParam(2))
                 returnTrue()
             }
-            case 0xd52a7d0f {
-                let secondParam := getUintParam(1)
-                burnBatch(getAddressParam(0), secondParam, getUintParam(add(secondParam, 2)))
+            case 0x6b20c454 {
+                let idsOffset := add(4, getUintParam(1))
+                let valuesOffset := add(4, getUintParam(2))
+                burnBatch(getAddressParam(0), idsOffset, valuesOffset)
                 returnTrue()
             }
             default {
@@ -64,15 +66,18 @@ object "ERC1155" {
                 deduceFromBalance(from, id, value)
                 addToBalance(to, id, value)
             }
-            function safeBatchTransferFrom(from, to, idsSize, valuesSize) {
-                 require(eq(idsSize, valuesSize))
+            function safeBatchTransferFrom(from, to, idsOffset, valuesOffset) {
+                let idsSize := calldataload(idsOffset)
+                let valuesSize := calldataload(valuesOffset)
+                require(eq(idsSize, valuesSize))
 
-                 for { let i := 1 } lte(i, idsSize) { i := add(i, 1) }
-                 {
-                    let id := getUintParam(add(2,i))
-                    let value := getUintParam(add(3, add(idsSize, i)))
+                for { let i := 1 } lte(i, idsSize) { i := add(i, 1) }
+                {
+                    let paramOffset := mul(0x20, i)
+                    let id := calldataload(add(paramOffset, idsOffset))
+                    let value := calldataload(add(paramOffset, valuesOffset))
                     safeTransferFrom(from, to, id, value)
-                 }
+                }
             }
             function balanceOf(owner, id) -> bal {
                 bal := sload(balanceAddressOffset(owner, id))
@@ -103,7 +108,6 @@ object "ERC1155" {
             }
             function mint(to, id, value) {
                 addToBalance(to, id, value)
-
             }
             function mintBatch(to, idsOffset, valuesOffset) {
                 let idsSize := calldataload(idsOffset)
@@ -119,16 +123,19 @@ object "ERC1155" {
                 }
             }
             function burn(from, id, value) {
+                require(or(eq(from, caller()), isApprovedForAll(from, caller())))
                 deduceFromBalance(from, id, value)
             }
-            function burnBatch(from, idsSize, valuesSize) {
+            function burnBatch(from, idsOffset, valuesOffset) {
+                let idsSize := calldataload(idsOffset)
+                let valuesSize := calldataload(valuesOffset)
                 require(eq(idsSize, valuesSize))
-
                 for { let i := 1 } lte(i, idsSize) { i := add(i, 1) }
                 {   
-                    let id := getUintParam(add(1, i))
-                    let value := getUintParam(add(add(idsSize, 1), i))
-                    deduceFromBalance(from, id, value)
+                    let paramOffset := mul(0x20, i)
+                    let id := calldataload(add(idsOffset, paramOffset))
+                    let value := calldataload(add(valuesOffset, paramOffset))
+                    burn(from, id, value)
                 }
             }
 
