@@ -301,27 +301,49 @@ contract ERC1155Test is Test {
         vm.prank(address(1));
         erc1155Contract.burnBatch(address(1), ids, invalidValuesToBurn);
     }
-/*
     // Testing events emission
-
+    
     event TransferSingle(address indexed _operator, address indexed _from, address indexed _to, uint256 _id, uint256 _value);
-
+    
     function testTransferSingleEvent() public {
-        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba']);
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 1;
+        ids[1] = 2;
+        
+        uint256[] memory values = new uint256[](2);
+        values[0] = 4;
+        values[1] = 1;
 
+        
+        erc1155Contract.mintBatch(address(1), ids, values);
+        
         // single transfer
         vm.prank(address(1)); 
         
         vm.expectEmit(true, true, true, true);
         emit TransferSingle(address(1), address(1), address(2), 1, 1);
-
+        
         erc1155Contract.safeTransferFrom(address(1), address(2), 1, 1);
     }
-
+    
     event TransferBatch(address indexed _operator, address indexed _from, address indexed _to, uint256[] _ids, uint256[] _values);
-
+    
     function testTransferBatchEvent() public {
-        erc1155Contract.batchMint(address(1), [1,2,3,4,5], [5,4,3,2,1]);
+        uint256[] memory ids = new uint256[](5);
+        ids[0] = 1;
+        ids[1] = 2;
+        ids[2] = 3;
+        ids[3] = 4;
+        ids[4] = 5;
+        
+        uint256[] memory values = new uint256[](5);
+        values[0] = 5;
+        values[1] = 4;
+        values[2] = 3;
+        values[3] = 2;
+        values[4] = 1;
+
+        erc1155Contract.mintBatch(address(1), ids, values);
         
         vm.prank(address(1));
         
@@ -329,20 +351,19 @@ contract ERC1155Test is Test {
             vm.expectEmit(true, true, true, true);
             emit TransferSingle(address(1), address(1), address(2), i, 6-i);
         }
-
-        vm.expectEmit(true, true, true, true);
-        emit TransferBatch(address(1), address(1), address(2), [1,2,3,4,5], [5,4,3,2,1]);
-
-        erc1155Contract.safeBatchTransferFrom(address(1), address(2), [1,2,3,4,5], [5,4,3,2,1]);
+    
+       vm.expectEmit(true, true, true, true);
+       emit TransferBatch(address(1), address(1), address(2), ids, values);
+        
+        erc1155Contract.safeBatchTransferFrom(address(1), address(2), ids, values); 
     }
-
     event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
 
     function testApprovalForAll() public {
-        erc1155Contract.mint(address(1), 1, 'abc');
+        erc1155Contract.mint(address(1), 1, 1);
         vm.prank(address(1));
 
-        vm.expectEmit(true, true, true);
+        vm.expectEmit(true, true, true, true);
         emit ApprovalForAll(address(1), address(2), true);
 
         erc1155Contract.setApprovalForAll(address(2), true);

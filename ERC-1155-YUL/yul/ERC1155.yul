@@ -61,23 +61,50 @@ object "ERC1155" {
                 revert(0, 0)
             }
             function safeTransferFrom(from, to, id, value) {
-                require(lte(value, balanceOf(from, id)))
-                require(or(eq(from, caller()), isApprovedForAll(from, caller())))
-                deduceFromBalance(from, id, value)
-                addToBalance(to, id, value)
+                if iszero(eq(from, 0x00)) {  // if not mint
+                    require(lte(value, balanceOf(from, id)))
+                    require(or(eq(from, caller()), isApprovedForAll(from, caller())))
+                    deduceFromBalance(from, id, value)
+                }
+                if iszero(eq(to, 0x00)) {   // if not burn
+                    addToBalance(to, id, value)
+                }
+                // emit TransferSingle(address,address,address,uint256,uint256)
+                let signatureHash := 0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62
+                mstore(0x00, id)
+                mstore(0x20, value)
+                log4(0x00, 0x40, signatureHash, caller(), from, to)
             }
             function safeBatchTransferFrom(from, to, idsOffset, valuesOffset) {
                 let idsSize := calldataload(idsOffset)
                 let valuesSize := calldataload(valuesOffset)
                 require(eq(idsSize, valuesSize))
 
+                let idLogOffset := 0xa0
+                let valueLogOffset := add(0xc0, mul(0x20, idsSize))
+
                 for { let i := 1 } lte(i, idsSize) { i := add(i, 1) }
                 {
                     let paramOffset := mul(0x20, i)
                     let id := calldataload(add(paramOffset, idsOffset))
                     let value := calldataload(add(paramOffset, valuesOffset))
+
+                    mstore(add(idLogOffset, paramOffset), id)
+                    mstore(add(valueLogOffset, paramOffset), value)
                     safeTransferFrom(from, to, id, value)
                 }
+                // emit TransferBatch(address,address,address,uint256[],uint256[])
+
+                let idsLogMemoryOffset := 0x40
+                let valuesLogMemoryOffset := add(add(0x20, idsLogMemoryOffset), mul(0x20, idsSize))
+                
+                mstore(0x60, idsLogMemoryOffset) // offset to id
+                mstore(0x80, valuesLogMemoryOffset)
+                mstore(0xa0, idsSize)
+                mstore(valueLogOffset, valuesSize)
+                let signatureHash := 0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb
+                log4(0x60, add(0x80, mul(mul(0x20, idsSize), 2)), signatureHash, caller(), from, to)
+                //total size = 0x20 + 0x20 for offsets and 0x20 + 0x20 for the size + the size of both arrays which are equal
             }
             function balanceOf(owner, id) -> bal {
                 bal := sload(balanceAddressOffset(owner, id))
@@ -102,29 +129,23 @@ object "ERC1155" {
             function setApprovalForAll(operator, approved) {
                 require(lte(approved, 1))
                 sstore(approvalsForAllOffset(caller(), operator), approved)
+
+                let signatureHash := 0x17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31
+                mstore(0x00, approved)
+                log3(0x00, 0x20, signatureHash, caller(), operator)
             }
             function isApprovedForAll(owner, operator) -> isApproved{
                 isApproved := sload(approvalsForAllOffset(owner, operator))
             }
             function mint(to, id, value) {
-                addToBalance(to, id, value)
+                safeTransferFrom(0x00, to, id, value)
             }
             function mintBatch(to, idsOffset, valuesOffset) {
-                let idsSize := calldataload(idsOffset)
-                let valuesSize := calldataload(valuesOffset)
-                require(eq(idsSize, valuesSize))
-                for { let i := 1 } lte(i, idsSize) { i := add(i, 1) }
-                {
-                    let paramOffset := mul(0x20, i)
-                    let id := calldataload(add(idsOffset, paramOffset))
-                    let value := calldataload(add(valuesOffset, paramOffset))
-                    let offset := balanceAddressOffset(to, id)
-                    mint(to, id, value)
-                }
+                safeBatchTransferFrom(0x00, to, idsOffset, valuesOffset)
             }
             function burn(from, id, value) {
                 require(or(eq(from, caller()), isApprovedForAll(from, caller())))
-                deduceFromBalance(from, id, value)
+                safeTransferFrom(from, 0x00, id, value)
             }
             function burnBatch(from, idsOffset, valuesOffset) {
                 let idsSize := calldataload(idsOffset)
