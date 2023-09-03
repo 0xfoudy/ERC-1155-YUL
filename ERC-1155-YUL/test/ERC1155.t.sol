@@ -10,7 +10,7 @@ interface ERC1155 {
     function balanceOf(address _owner, uint256 _id) external returns(uint256);
     function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value) external;
     function setApprovalForAll(address _operator, bool _approved) external;
-
+    function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids) external view returns (uint256[] memory);
 }
 
 contract ERC1155Test is Test {
@@ -154,28 +154,76 @@ contract ERC1155Test is Test {
         assertEq(erc1155Contract.balanceOf(address(2), 2), 0);        
     }
 
-
+*/
     // function balanceOf(address _owner, uint256 _id) external view returns (uint256);
     function testBalanceOf() public {
-        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba']);
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 1;
+        ids[1] = 2;
+
+        uint256[] memory values = new uint256[](2);
+        values[0] = 4;
+        values[1] = 1;
+        erc1155Contract.mintBatch(address(1), ids, values);
         assertEq(erc1155Contract.balanceOf(address(1), 1), 4);
-        assertEq(erc1155Contract.balanceOf(address(1), 1), 1);
+        assertEq(erc1155Contract.balanceOf(address(1), 2), 1);
         assertEq(erc1155Contract.balanceOf(address(1), 3), 0);
     }
 
     // function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids) external view returns (uint256[] memory);
     function testBalanceOfBatch() public {
-        erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba']);
-        erc1155Contract.batchMint(address(2), [1,1,1,1,2], ['def','ghi','klm','nop','abc']);
-        assertEq(erc1155Contract.balanceOfBatch([address(1), address(2)], [1,1]), [4,4]);
-        assertEq(erc1155Contract.balanceOfBatch([address(1), address(1)], [2,1]), [1,4]);
-        assertEq(erc1155Contract.balanceOfBatch([address(1), address(2)], [2,2]), [1,1]);
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 1;
+        ids[1] = 2;
+        
+        uint256[] memory values = new uint256[](2);
+        values[0] = 1;
+        values[1] = 4;
+        
+        erc1155Contract.mintBatch(address(1), ids, values);
+        erc1155Contract.mintBatch(address(2), ids, values);
+        
+        uint256[] memory balance1_2_id_1_1 = new uint256[](2);
+        balance1_2_id_1_1[0] = 1;
+        balance1_2_id_1_1[1] = 1;
+        
+        uint256[] memory balance1_1_id_2_1 = new uint256[](2);
+        balance1_1_id_2_1[0] = 4;
+        balance1_1_id_2_1[1] = 1;
+        
+        uint256[] memory balance1_2_id_2_2 = new uint256[](2);
+        balance1_2_id_2_2[0] = 4;
+        balance1_2_id_2_2[1] = 4;
+
+        address[] memory addresses1_2 = new address[](2);
+        addresses1_2[0] = address(1);
+        addresses1_2[1] = address(2);
+        
+        address[] memory addresses1_1 = new address[](2);
+        addresses1_1[0] = address(1);
+        addresses1_1[1] = address(1);
+
+        uint256[] memory ids1_1 = new uint256[](2);
+        ids1_1[0] = 1;
+        ids1_1[1] = 1;
+        
+        uint256[] memory ids2_1 = new uint256[](2);
+        ids2_1[0] = 2;
+        ids2_1[1] = 1;
+        
+        uint256[] memory ids2_2 = new uint256[](2);
+        ids2_2[0] = 2;
+        ids2_2[1] = 2;
+        
+        /*                       balanceOfBatch([address(1),address(2)], [1,1]) = [1,1] */
+        assertEq(erc1155Contract.balanceOfBatch(addresses1_2, ids1_1), balance1_2_id_1_1);
+        /*                       balanceOfBatch([address(1),address(1)], [2,1]) = [4,1] */
+        assertEq(erc1155Contract.balanceOfBatch(addresses1_1, ids2_1), balance1_1_id_2_1);
+        /*                       balanceOfBatch([address(1),address(2)], [2,2]) = [4,4] */
+        assertEq(erc1155Contract.balanceOfBatch(addresses1_2, ids2_2), balance1_2_id_2_2);
     }
 
-    // function setApprovalForAll(address _operator, bool _approved) external;
-    // function isApprovedForAll(address _owner, address _operator) external view returns (bool);
-    
-
+/*
     // function burn(address from, uint256 id, uint256 value)
     function testBurn() public {
         erc1155Contract.batchMint(address(1), [1,1,1,1,2], ['abc','def','ghi','klm','cba']);

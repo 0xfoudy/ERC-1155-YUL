@@ -22,9 +22,10 @@ object "ERC1155" {
             case 0x00fdd58e {
                 returnUint(balanceOf(getAddressParam(0), getUintParam(1)))
             }
-            case 0x4e1273f4 {
-                let firstParam := getUintParam(0)
-                balanceOfBatch(firstParam, getUintParam(add(firstParam, 1)))
+            case 0x4e1273f4 { // balanceOfBatch(address[], uint256[])
+                let ownersOffset := add(4, getUintParam(0))
+                let idsOffset := add(4, getUintParam(1))
+                balanceOfBatch(ownersOffset, idsOffset)
             }
             case 0xa22cb465 {
                 setApprovalForAll(getAddressParam(0), getUintParam(1))
@@ -76,17 +77,22 @@ object "ERC1155" {
             function balanceOf(owner, id) -> bal {
                 bal := sload(balanceAddressOffset(owner, id))
             }
-            function balanceOfBatch(ownersSize, idsSize) {
+            function balanceOfBatch(ownersOffset, idsOffset) {
+                let ownersSize := calldataload(ownersOffset)
+                let idsSize := calldataload(idsOffset)
                 require(eq(ownersSize, idsSize))
 
-                mstore(0x00, ownersSize) // stores the size of the array to return
                 for { let i := 1 } lte(i, ownersSize) { i := add(i, 1) } // starting at i = 1 to skip the size word in each array
                 {
-                    let owner := getAddressParam(i)
-                    let id := getUintParam(add(ownersSize, i))
-                    mstore(mul(0x20, i), balanceOf(owner, id)) // stores the values adjacently
+                    let paramOffset := mul(0x20, i)
+                    let owner := calldataload(add(paramOffset, ownersOffset))
+                    let id := calldataload(add(paramOffset, idsOffset))
+                    mstore(add(0x80, mul(0x20, i)), balanceOf(owner, id)) // stores the values adjacently
                 }
-                return(0x00, mul(0x20, ownersSize))
+
+                mstore(0x60, 0x20) // stores the first offset
+                mstore(0x80, ownersSize) // stores the size of the array to return
+                return(0x60, add(0x40, mul(0x20, ownersSize)))
             }
             function setApprovalForAll(operator, approved) {
                 require(lte(approved, 1))
