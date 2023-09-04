@@ -17,7 +17,9 @@ if __name__ == "__main__":
         "burn(address,uint256,uint256)",
         "burnBatch(address,uint256[],uint256[])",
         "safeBatchTransferFrom(address,address,uint256[],uint256[])",
-        "isApprovedForAll(address,address)"
+        "isApprovedForAll(address,address)",
+        "setUri(string)",
+        "getUri()"
     ]
     
     for signature in function_signatures:

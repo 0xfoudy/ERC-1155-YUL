@@ -15,6 +15,8 @@ interface ERC1155 {
     function safeBatchTransferFrom(address _from, address _to, uint256[] calldata _ids, uint256[] calldata _values) external;
     function setApprovalForAll(address _operator, bool _approved) external;
     function isApprovedForAll(address owner, address _operator) external returns (bool);
+    function setUri(string calldata uri) external;
+    function getUri() external returns (string memory); //returns (string memory);
 }
 
 contract ERC1155Test is Test {
@@ -27,6 +29,16 @@ contract ERC1155Test is Test {
     }
 
     // Testing functions
+
+    //function setUri(string calldata uri)
+    function testURI() public {
+        erc1155Contract.setUri("Jeffry");
+        assertEq(erc1155Contract.getUri(), "Jeffry");
+
+        erc1155Contract.setUri("JeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffry");
+        assertEq(erc1155Contract.getUri(), "JeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffryJeffry");
+        //erc1155Contract.setUri("ipfs://QmW2WQi7j6c7UgJTarActp7tDNikE4B2qXtFCfLPdsgaTQ/{id}.json");
+    }
 
     // function mint(address to, uint256 id, uint256 value)
     function testMint() public {

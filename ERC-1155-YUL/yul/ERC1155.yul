@@ -57,8 +57,54 @@ object "ERC1155" {
                 burnBatch(getAddressParam(0), idsOffset, valuesOffset)
                 returnTrue()
             }
+            case 0x9b642de1 {
+                let stringOffset := add(4, getUintParam(0))
+                setUri(stringOffset)
+            }
+            case 0x4e16fc8b {
+                getUri()
+            }
             default {
                 revert(0, 0)
+            }
+            function setUri(stringOffset) {
+                let stringSize := calldataload(stringOffset)
+                switch lte(stringSize, 0x1f)
+                case 0x01 {
+                    sstore(0x01, add(calldataload(add(0x20, stringOffset)), mul(0x02, stringSize)))
+                }
+                case 0x00 {
+                    let counter := 0
+                    sstore(0x01, stringSize)
+                    mstore(0x00, 0x01)
+                    for { let i:= 0x00 } lte(i, stringSize) {i := add(i, 0x20)}
+                    {
+                        sstore(add(keccak256(0x00, 0x20), counter), calldataload(add(add(0x20, stringOffset), i)))
+                        counter := add(counter, 0x01)
+                    }
+                }
+            }
+            function getUri(){
+                let uriFirstWord := sload(0x01)
+                let uriLastByte := and(uriFirstWord, 0x00000000000000000000000000000000000000000000000000000000000000ff)
+                mstore(0x20, 0x20)
+                mstore(0x40, uriLastByte)
+                switch lte(uriLastByte, 0x1f)
+                case 0x01 {
+                    let actualString := and(sload(0x01), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00)
+                    mstore(0x60, actualString)
+                    return(0x20, 0x60)
+                }
+                case 0x00 {
+                    mstore(0x00, 0x01)
+                    let counter := 0
+                    for { let i:= 0x00 } lte(i, uriFirstWord) {i := add(i, 0x20)}
+                    {
+                        mstore(add(0x60, i), sload(add(keccak256(0x00, 0x20), counter)))
+                        counter := add(counter, 0x01)
+                    }
+                    return(0x20, add(0x40, mul(0x20, counter)))
+                }
             }
             function safeTransferFrom(from, to, id, value) {
                 if iszero(eq(from, 0x00)) {  // if not mint
